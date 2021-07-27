@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:hot_dog_not_hot_dog/util/notification.dart';
-import 'package:hot_dog_not_hot_dog/widgets/result_notification.dart';
 
 class CameraControls extends StatelessWidget {
+  final Function onCapture;
+
+  CameraControls({required this.onCapture});
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -19,8 +21,7 @@ class CameraControls extends StatelessWidget {
             child: IconButton(
               padding: EdgeInsets.all(26.0),
               onPressed: () {
-                print('press');
-                showNotification(context, Result.HotDog);
+                onCapture();
               },
               icon: Icon(Icons.camera),
             ),

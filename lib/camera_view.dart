@@ -1,6 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/services.dart';
 import 'package:hot_dog_not_hot_dog/widgets/camera_controls.dart';
+import 'package:hot_dog_not_hot_dog/widgets/result_notification.dart';
+import 'package:image/image.dart' as image;
+import 'package:hot_dog_not_hot_dog/util/notification.dart';
 
 class CameraView extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -14,6 +22,8 @@ class CameraView extends StatefulWidget {
 class _CameraViewState extends State<CameraView> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
+
+  static const platform = const MethodChannel('hotdog_model');
 
   initialize() {
     super.initState();
@@ -38,6 +48,21 @@ class _CameraViewState extends State<CameraView> {
     super.dispose();
   }
 
+  onCapture() async {
+    final file = await _controller.takePicture();
+
+    final result = await platform.invokeMethod(
+        'predict',
+        image
+            .decodeImage(new File(file.path).readAsBytesSync())!
+            .getBytes(format: image.Format.rgb)) as Float64List;
+
+    print(result);
+
+    showNotification(
+        context, result[0].round() == 0 ? Result.HotDog : Result.NotHotDog);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -57,7 +82,10 @@ class _CameraViewState extends State<CameraView> {
             },
           ),
         ),
-        Expanded(child: CameraControls())
+        Expanded(
+            child: CameraControls(
+          onCapture: onCapture,
+        ))
       ],
     );
   }
