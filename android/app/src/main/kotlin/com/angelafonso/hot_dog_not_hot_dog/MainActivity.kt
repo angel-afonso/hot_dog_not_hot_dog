@@ -4,6 +4,10 @@ import com.angelafonso.hot_dog_not_hot_dog.ml.Model
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.image.ImageProcessor;
 import org.tensorflow.lite.support.image.TensorImage;
@@ -26,7 +30,7 @@ class MainActivity: FlutterActivity() {
                     val argument = call.arguments as ByteArray
 
                     val imageProcessor = ImageProcessor.Builder()
-                        .add(ResizeOp(200, 200, ResizeOp.ResizeMethod.BILINEAR))
+                        .add(ResizeOp(300, 300, ResizeOp.ResizeMethod.BILINEAR))
                         .add(Rot90Op(90))
                         .build()
 
@@ -35,7 +39,12 @@ class MainActivity: FlutterActivity() {
 
                     val output = model.process(imageProcessor.process(input).tensorBuffer)
 
-                    result.success(DoubleArray(output.outputFeature0AsTensorBuffer.floatArray.size){output.outputFeature0AsTensorBuffer.floatArray[it].toDouble()})
+                    result.success(
+                      DoubleArray(
+                        output.outputFeature0AsTensorBuffer.floatArray.size){
+                          output.outputFeature0AsTensorBuffer.floatArray[it].toDouble()
+                        }
+                    )
 
                     model.close()
                 }

@@ -14,3 +14,17 @@ Future<void> showNotification(BuildContext context, Result result) {
     entry.remove();
   });
 }
+
+OverlayEntry showLoading(BuildContext context) {
+  final entry = OverlayEntry(
+    builder: (context) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    },
+  );
+
+  Navigator.of(context).overlay!.insert(entry);
+
+  return entry;
+}

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class CameraControls extends StatelessWidget {
   final Function onCapture;
+  final Function onSwitch;
 
-  CameraControls({required this.onCapture});
+  CameraControls({required this.onCapture, required this.onSwitch});
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +21,7 @@ class CameraControls extends StatelessWidget {
                 BoxDecoration(shape: BoxShape.circle, color: Colors.grey),
             child: IconButton(
               padding: EdgeInsets.all(26.0),
-              onPressed: () {
-                onCapture();
-              },
+              onPressed: () => onCapture(),
               icon: Icon(Icons.camera),
             ),
           ),
@@ -30,7 +29,8 @@ class CameraControls extends StatelessWidget {
         Expanded(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: IconButton(onPressed: () {}, icon: Icon(Icons.cameraswitch)),
+            child: IconButton(
+                onPressed: () => onSwitch(), icon: Icon(Icons.cameraswitch)),
           ),
         ),
       ],

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:hot_dog_not_hot_dog/widgets/camera_controls.dart';
 import 'package:hot_dog_not_hot_dog/widgets/result_notification.dart';
 import 'package:image/image.dart' as image;
-import 'package:hot_dog_not_hot_dog/util/notification.dart';
+import 'package:hot_dog_not_hot_dog/util/utils.dart';
 
 class CameraView extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -20,26 +19,20 @@ class CameraView extends StatefulWidget {
 }
 
 class _CameraViewState extends State<CameraView> {
-  late CameraController _controller;
-  late Future<void> _initializeControllerFuture;
-
   static const platform = const MethodChannel('hotdog_model');
 
-  initialize() {
-    super.initState();
+  late Future<void> _initializeControllerFuture;
+  late CameraController _controller;
 
-    final camera = widget.cameras.first;
-
-    _controller = CameraController(camera, ResolutionPreset.max);
-
-    _initializeControllerFuture = _controller.initialize();
-  }
+  int cameraIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _controller =
+        CameraController(widget.cameras[cameraIndex], ResolutionPreset.max);
 
-    initialize();
+    _initializeControllerFuture = _controller.initialize();
   }
 
   @override
@@ -49,6 +42,8 @@ class _CameraViewState extends State<CameraView> {
   }
 
   onCapture() async {
+    final entry = showLoading(context);
+
     final file = await _controller.takePicture();
 
     final result = await platform.invokeMethod(
@@ -57,36 +52,45 @@ class _CameraViewState extends State<CameraView> {
             .decodeImage(new File(file.path).readAsBytesSync())!
             .getBytes(format: image.Format.rgb)) as Float64List;
 
-    print(result);
+    entry.remove();
 
     showNotification(
         context, result[0].round() == 0 ? Result.HotDog : Result.NotHotDog);
   }
 
+  switchCamera() {
+    cameraIndex = cameraIndex < widget.cameras.length - 1 ? cameraIndex + 1 : 0;
+
+    setState(() {
+      _controller =
+          CameraController(widget.cameras[cameraIndex], ResolutionPreset.max);
+      _initializeControllerFuture = _controller.initialize();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          flex: 6,
-          child: FutureBuilder(
-            future: _initializeControllerFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                return CameraPreview(_controller);
-              }
+    return FutureBuilder(
+      future: _initializeControllerFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
 
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            },
-          ),
-        ),
-        Expanded(
-            child: CameraControls(
-          onCapture: onCapture,
-        ))
-      ],
+        return Column(
+          children: [
+            Expanded(flex: 6, child: CameraPreview(_controller)),
+            Expanded(
+              child: CameraControls(
+                onCapture: onCapture,
+                onSwitch: switchCamera,
+              ),
+            )
+          ],
+        );
+      },
     );
   }
 }
